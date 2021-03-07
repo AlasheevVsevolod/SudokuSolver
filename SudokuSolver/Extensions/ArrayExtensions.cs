@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using SudokuSolver.Models;
 
-namespace SudokuSolver
+namespace SudokuSolver.Extensions
 {
     public static class ArrayExtensions
     {
@@ -43,11 +44,11 @@ namespace SudokuSolver
             return counter;
         }
 
-        public static List<(int, int)> Entries<T>(this T[,] array, T value)
+        public static List<Coordinate> Entries<T>(this T[,] array, T value)
         {
             var xLength = array.GetLength(0);
             var yLength = array.GetLength(1);
-            var entries = new List<(int, int)>();
+            var entries = new List<Coordinate>();
 
             for (var i = 0; i < xLength; i++)
             {
@@ -55,7 +56,7 @@ namespace SudokuSolver
                 {
                     if (array[i, j].Equals(value))
                     {
-                        entries.Add((i, j));
+                        entries.Add(new Coordinate(i, j));
                     }
                 }
             }

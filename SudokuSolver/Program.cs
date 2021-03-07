@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using SudokuSolver.Extensions;
+using SudokuSolver.Models;
 
 namespace SudokuSolver
 {
@@ -11,8 +13,8 @@ namespace SudokuSolver
         const int maxNumberAmount = 9;
         const int cubeSize = 3;
         static int[,] arr = new int[fieldSize, fieldSize];
-        static (int x, int y) currentPosition;
-        static (int x, int y) currentCube => (currentPosition.x / 3, currentPosition.y / 3);
+        static Coordinate currentPosition;
+        static Cube currentCube => new Cube(currentPosition, cubeSize);
 
         private static void Main()
         {
@@ -63,10 +65,10 @@ namespace SudokuSolver
 
                     Console.WriteLine($"Checking {currentCheckedNumber}...");
 
-                    var numberEntries = arr.Entries(0);
-                    foreach (var (x, y) in numberEntries)
+                    var emptyNumberEntries = arr.Entries(0);
+                    foreach (var coordinate in emptyNumberEntries)
                     {
-                        currentPosition = (x, y);
+                        currentPosition = coordinate;
 
                         if (IsAlreadyContains(currentCheckedNumber))
                         {
@@ -75,7 +77,13 @@ namespace SudokuSolver
 
                         if (IsLastCellRemaining())
                         {
-                            arr[currentPosition.x, currentPosition.y] = currentCheckedNumber;
+                            arr[currentPosition.X, currentPosition.Y] = currentCheckedNumber;
+                            continue;
+                        }
+                        
+                        if (IsLastCellInCubeRemaining(currentCheckedNumber))
+                        {
+                            arr[currentPosition.X, currentPosition.Y] = currentCheckedNumber;
                             continue;
                         }
                     }
@@ -93,54 +101,36 @@ namespace SudokuSolver
             Console.ReadKey();
         }
 
-        #region CheckIfAlreadyContains
         private static bool IsAlreadyContains(int currentNumber)
         {
             var entries = arr.Entries(currentNumber);
-            return IsAlreadyContainsForHorizontal(entries)
-                   || IsAlreadyContainsForVertical(entries)
-                   || IsAlreadyContainsForCube(entries);
+
+            //Already contained in horizontal line
+            return entries.Any(e => e.Y == currentPosition.Y)
+                   //Already contained in vertical line
+                   || entries.Any(e => e.X == currentPosition.X)
+                   //Already contained in current cube
+                   || entries.Any(e => e.IsWithinCube(currentCube));
         }
 
-        private static bool IsAlreadyContainsForHorizontal(IEnumerable<(int x, int y)> entries)
-        {
-            return entries.Any(e => e.y == currentPosition.y);
-        }
-
-        private static bool IsAlreadyContainsForVertical(IEnumerable<(int x, int y)> entries)
-        {
-            return entries.Any(e => e.x == currentPosition.x);
-        }
-
-        private static bool IsAlreadyContainsForCube(IEnumerable<(int x, int y)> entries)
-        {
-            return entries.Any(e => e.IsWithinCube(currentCube, cubeSize));
-        }
-        #endregion
-
-        #region CheckIfLastCellRemaining
         private static bool IsLastCellRemaining()
         {
             var entries = arr.Entries(0);
-            return IsHorizontallyLastCellRemaining(entries)
-                   || IsVerticallyLastCellRemaining(entries)
-                   || IsLastCellRemainingInCube(entries);
+
+            //Last in horizontal line
+            return entries.Count(e => e.Y == currentPosition.Y) == 1
+                   //Last in vertical line
+                   || entries.Count(e => e.X == currentPosition.X) == 1
+                   //Last in current cube
+                   || entries.Count(e => e.IsWithinCube(currentCube)) == 1;;
         }
 
-        private static bool IsHorizontallyLastCellRemaining(IEnumerable<(int x, int y)> entries)
+        private static bool IsLastCellInCubeRemaining(int currentNumber)
         {
-            return entries.Count(e => e.y == currentPosition.y) == 1;
-        }
+            var currentNumberEntries = arr.Entries(currentNumber);
+            var defaultNumberEntries = arr.Entries(0);
 
-        private static bool IsVerticallyLastCellRemaining(IEnumerable<(int x, int y)> entries)
-        {
-            return entries.Count(e => e.x == currentPosition.x) == 1;
+            return false;
         }
-
-        private static bool IsLastCellRemainingInCube(IEnumerable<(int x, int y)> entries)
-        {
-            return entries.Count(e => e.IsWithinCube(currentCube, cubeSize)) == 1;
-        }
-        #endregion
     }
 }
