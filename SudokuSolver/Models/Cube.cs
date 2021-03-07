@@ -1,4 +1,5 @@
-﻿using SudokuSolver.Models;
+﻿using SudokuSolver.Extensions;
+using SudokuSolver.Models;
 
 namespace SudokuSolver
 {
@@ -12,9 +13,15 @@ namespace SudokuSolver
             MaxY = MinY + cubeSize - 1;
         }
 
-        public int MinX { get; }
-        public int MaxX { get; }
-        public int MinY { get; }
-        public int MaxY { get; }
+        private int MinX { get; }
+        private int MaxX { get; }
+        private int MinY { get; }
+        private int MaxY { get; }
+
+        public bool ContainsCoordinate(Coordinate coordinate)
+        {
+            return coordinate.X.IsWithin(MinX, MaxX)
+                   && coordinate.Y.IsWithin(MinY, MaxY);
+        }
     }
 }

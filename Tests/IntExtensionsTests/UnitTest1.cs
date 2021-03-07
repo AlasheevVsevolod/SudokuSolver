@@ -1,6 +1,5 @@
 using NUnit.Framework;
 using SudokuSolver;
-using SudokuSolver.Extensions;
 using SudokuSolver.Models;
 
 namespace Tests.IntExtensionsTests
@@ -15,7 +14,7 @@ namespace Tests.IntExtensionsTests
             var currentPos = new Coordinate(5,5);
             var currentCube = new Cube(new Coordinate(0,0), cubeSize);
 
-            var isWithinCube = currentPos.IsWithinCube(currentCube);
+            var isWithinCube = currentCube.ContainsCoordinate(currentPos);
             Assert.IsFalse(isWithinCube);
         }
         
@@ -25,7 +24,7 @@ namespace Tests.IntExtensionsTests
             var currentPos = new Coordinate(2,1);
             var currentCube = new Cube(new Coordinate(0,0), cubeSize);
 
-            var isWithinCube = currentPos.IsWithinCube(currentCube);
+            var isWithinCube = currentCube.ContainsCoordinate(currentPos);
             Assert.IsTrue(isWithinCube);
         }
     }

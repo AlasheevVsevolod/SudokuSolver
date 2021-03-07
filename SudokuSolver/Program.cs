@@ -110,7 +110,7 @@ namespace SudokuSolver
                    //Already contained in vertical line
                    || entries.Any(e => e.X == currentPosition.X)
                    //Already contained in current cube
-                   || entries.Any(e => e.IsWithinCube(currentCube));
+                   || entries.Any(e => currentCube.ContainsCoordinate(e));
         }
 
         private static bool IsLastCellRemaining()
@@ -122,7 +122,7 @@ namespace SudokuSolver
                    //Last in vertical line
                    || entries.Count(e => e.X == currentPosition.X) == 1
                    //Last in current cube
-                   || entries.Count(e => e.IsWithinCube(currentCube)) == 1;;
+                   || entries.Count(e => currentCube.ContainsCoordinate(e)) == 1;;
         }
 
         private static bool IsLastCellInCubeRemaining(int currentNumber)
