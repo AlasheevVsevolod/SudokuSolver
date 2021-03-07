@@ -1,16 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace SudokuSolver
 {
     class Program
     {
         const int fieldSize = 9;
+        const int maxNumberAmount = 9;
         const int cubeSize = 3;
         static int[,] arr = new int[fieldSize, fieldSize];
-        static Tuple<int, int> currentPosition;
-
-        static Tuple<int, int> currentCube => new Tuple<int, int>(currentPosition.Item1 / 3, currentPosition.Item2 / 3);
+        static (int x, int y) currentPosition;
+        static (int x, int y) currentCube => (currentPosition.x / 3, currentPosition.y / 3);
 
         private static void Main()
         {
@@ -25,15 +27,13 @@ namespace SudokuSolver
                         {
                             arr[j, i] = Convert.ToInt32(Console.ReadKey().KeyChar.ToString());
                         }
-
-                        //Console.WriteLine();
                     }
 
                     isValidInput = true;
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"\nError parsing string, please try again");
+                    Console.WriteLine($"\nError parsing string, please try again. {e}");
                 }
             }
 
@@ -41,35 +41,42 @@ namespace SudokuSolver
 
             var loopsCount = 0;
             var totalTimer = Stopwatch.StartNew();
+
+            var missedNumbers = new List<int>();
+            for (var i = 1; i <= fieldSize; i++)
+            {
+                missedNumbers.Add(i);
+            }
+
             while (arr.Contains(0))
             {
                 var localTimer = Stopwatch.StartNew();
 
-                for (var i = 1; i <= 9; i++)
+                for (var i = 0; i < missedNumbers.Count; i++)
                 {
-                    Console.WriteLine($"Checking {i}...");
-
-                    for (var y = 0; y < fieldSize; y++)
+                    var currentCheckedNumber = missedNumbers[i];
+                    if (arr.Count(currentCheckedNumber) == maxNumberAmount)
                     {
-                        for (var x = 0; x < fieldSize; x++)
+                        missedNumbers.Remove(currentCheckedNumber);
+                        break;
+                    }
+
+                    Console.WriteLine($"Checking {currentCheckedNumber}...");
+
+                    var numberEntries = arr.Entries(0);
+                    foreach (var (x, y) in numberEntries)
+                    {
+                        currentPosition = (x, y);
+
+                        if (IsAlreadyContains(currentCheckedNumber))
                         {
-                            currentPosition = new Tuple<int, int>(x, y);
-                            if (arr[currentPosition.Item1, currentPosition.Item2] != 0)
-                            {
-                                continue;
-                            }
+                            continue;
+                        }
 
-                            if (CheckIfAlreadyContains(a => a == i))
-                            {
-                                continue;
-                            }
-
-                            if (CheckIfLastCellRemaining())
-                            {
-                                arr[currentPosition.Item1, currentPosition.Item2] = i;
-                            }
-
-
+                        if (IsLastCellRemaining())
+                        {
+                            arr[currentPosition.x, currentPosition.y] = currentCheckedNumber;
+                            continue;
                         }
                     }
                 }
@@ -87,108 +94,52 @@ namespace SudokuSolver
         }
 
         #region CheckIfAlreadyContains
-        private static bool CheckIfAlreadyContains(Func<int, bool> func)
+        private static bool IsAlreadyContains(int currentNumber)
         {
-            return CheckIfAlreadyContainsForHorizontal(func) 
-                   || CheckIfAlreadyContainsForVertical(func)
-                   || CheckIfAlreadyContainsForCube(func);
+            var entries = arr.Entries(currentNumber);
+            return IsAlreadyContainsForHorizontal(entries)
+                   || IsAlreadyContainsForVertical(entries)
+                   || IsAlreadyContainsForCube(entries);
         }
 
-        private static bool CheckIfAlreadyContainsForHorizontal(Func<int, bool> func)
+        private static bool IsAlreadyContainsForHorizontal(IEnumerable<(int x, int y)> entries)
         {
-            for (var i = 0; i < fieldSize; i++)
-            {
-                if (func.Invoke(arr[i, currentPosition.Item2]))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return entries.Any(e => e.y == currentPosition.y);
         }
 
-        private static bool CheckIfAlreadyContainsForVertical(Func<int, bool> func)
+        private static bool IsAlreadyContainsForVertical(IEnumerable<(int x, int y)> entries)
         {
-            for (var i = 0; i < fieldSize; i++)
-            {
-                if (func.Invoke(arr[currentPosition.Item1, i]))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return entries.Any(e => e.x == currentPosition.x);
         }
 
-        private static bool CheckIfAlreadyContainsForCube(Func<int, bool> func)
+        private static bool IsAlreadyContainsForCube(IEnumerable<(int x, int y)> entries)
         {
-            for (var i = 0; i < cubeSize; i++)
-            {
-                for (var j = 0; j < cubeSize; j++)
-                {
-                    if (func.Invoke(arr[currentCube.Item1 + i, currentCube.Item2 + j]))
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return entries.Any(e => e.IsWithinCube(currentCube, cubeSize));
         }
         #endregion
 
         #region CheckIfLastCellRemaining
-        private static bool CheckIfLastCellRemaining()
+        private static bool IsLastCellRemaining()
         {
-            return CheckIfHorizontallyLastCellRemaining()
-                   || CheckIfVerticallyLastCellRemaining()
-                   || CheckIfLastCellRemainingInCube();
+            var entries = arr.Entries(0);
+            return IsHorizontallyLastCellRemaining(entries)
+                   || IsVerticallyLastCellRemaining(entries)
+                   || IsLastCellRemainingInCube(entries);
         }
 
-        private static bool CheckIfHorizontallyLastCellRemaining()
+        private static bool IsHorizontallyLastCellRemaining(IEnumerable<(int x, int y)> entries)
         {
-            var emptyCount = 0;
-            for (var x = 0; x < fieldSize; x++)
-            {
-                if (arr[x, currentPosition.Item2] == 0)
-                {
-                    emptyCount++;
-                }
-            }
-
-            return emptyCount == 1;
+            return entries.Count(e => e.y == currentPosition.y) == 1;
         }
 
-        private static bool CheckIfVerticallyLastCellRemaining()
+        private static bool IsVerticallyLastCellRemaining(IEnumerable<(int x, int y)> entries)
         {
-            var emptyCount = 0;
-            for (var y = 0; y < fieldSize; y++)
-            {
-                if (arr[currentPosition.Item1, y] == 0)
-                {
-                    emptyCount++;
-                }
-            }
-
-            return emptyCount == 1;
+            return entries.Count(e => e.x == currentPosition.x) == 1;
         }
 
-        private static bool CheckIfLastCellRemainingInCube()
+        private static bool IsLastCellRemainingInCube(IEnumerable<(int x, int y)> entries)
         {
-            var emptyCount = 0;
-
-            for (var i = 0; i < cubeSize; i++)
-            {
-                for (var j = 0; j < cubeSize; j++)
-                {
-                    if (arr[currentCube.Item1 + i, currentCube.Item2 + j] == 0)
-                    {
-                        emptyCount++;
-                    }
-                }
-            }
-
-            return emptyCount == 1;
+            return entries.Count(e => e.IsWithinCube(currentCube, cubeSize)) == 1;
         }
         #endregion
     }
