@@ -13,8 +13,6 @@ namespace SudokuSolver
         const int maxNumberAmount = 9;
         const int cubeSize = 3;
         static int[,] arr = new int[fieldSize, fieldSize];
-        static Coordinate currentPosition;
-        static Cube currentCube => new Cube(currentPosition, cubeSize);
 
         private static void Main()
         {
@@ -66,25 +64,31 @@ namespace SudokuSolver
                     Console.WriteLine($"Checking {currentCheckedNumber}...");
 
                     var emptyNumberEntries = arr.Entries(0);
-                    foreach (var coordinate in emptyNumberEntries)
+                    foreach (var currentCoordinate in emptyNumberEntries)
                     {
-                        currentPosition = coordinate;
+                        var currentCube = new Cube(currentCoordinate, cubeSize);
 
-                        if (IsAlreadyContains(currentCheckedNumber))
+                        if (IsAlreadyContains(currentCoordinate, currentCube, currentCheckedNumber))
                         {
                             continue;
                         }
 
-                        if (IsLastCellRemaining())
+                        if (IsLastCellRemaining(currentCoordinate, currentCube))
                         {
-                            arr[currentPosition.X, currentPosition.Y] = currentCheckedNumber;
+                            SetNewValue(currentCoordinate, currentCheckedNumber);
                             continue;
                         }
-                        
-                        if (IsLastCellInCubeRemaining(currentCheckedNumber))
+
+                        if (IsLastCellInCubeRemaining(currentCoordinate, currentCube, currentCheckedNumber))
                         {
-                            arr[currentPosition.X, currentPosition.Y] = currentCheckedNumber;
+                            SetNewValue(currentCoordinate, currentCheckedNumber);
                             continue;
+                        }
+
+                        var qwe = false;
+                        if (qwe)
+                        {
+                            SetNewValue(new Coordinate(0,0), arr[0,0]);
                         }
                     }
                 }
@@ -101,36 +105,66 @@ namespace SudokuSolver
             Console.ReadKey();
         }
 
-        private static bool IsAlreadyContains(int currentNumber)
+        private static bool IsAlreadyContains(Coordinate currentCoordinate, Cube currentCube, int currentNumber)
         {
             var entries = arr.Entries(currentNumber);
 
             //Already contained in horizontal line
-            return entries.Any(e => e.Y == currentPosition.Y)
+            return entries.Any(e => e.Y == currentCoordinate.Y)
                    //Already contained in vertical line
-                   || entries.Any(e => e.X == currentPosition.X)
+                   || entries.Any(e => e.X == currentCoordinate.X)
                    //Already contained in current cube
-                   || entries.Any(e => currentCube.ContainsCoordinate(e));
+                   || entries.Any(currentCube.ContainsCoordinate);
         }
 
-        private static bool IsLastCellRemaining()
+        private static bool IsLastCellRemaining(Coordinate currentCoordinate, Cube currentCube)
         {
             var entries = arr.Entries(0);
 
             //Last in horizontal line
-            return entries.Count(e => e.Y == currentPosition.Y) == 1
+            return entries.Count(e => e.Y == currentCoordinate.Y) == 1
                    //Last in vertical line
-                   || entries.Count(e => e.X == currentPosition.X) == 1
+                   || entries.Count(e => e.X == currentCoordinate.X) == 1
                    //Last in current cube
-                   || entries.Count(e => currentCube.ContainsCoordinate(e)) == 1;;
+                   || entries.Count(currentCube.ContainsCoordinate) == 1;
         }
 
-        private static bool IsLastCellInCubeRemaining(int currentNumber)
+        private static bool IsLastCellInCubeRemaining(Coordinate currentCoordinate, Cube currentCube, int currentNumber)
         {
-            var currentNumberEntries = arr.Entries(currentNumber);
             var defaultNumberEntries = arr.Entries(0);
+            var checkedNumberEntries = arr.Entries(currentNumber);
+
+            //Last possible in cube horizontal line
+            if (defaultNumberEntries.Count(e => e.Y == currentCoordinate.Y && e.X.IsInRange(currentCube.MinX, currentCube.MaxX)) == 1 
+                && checkedNumberEntries.Count(e => e.Y != currentCoordinate.Y && e.Y.IsInRange(currentCube.MinY, currentCube.MaxY)) == cubeSize - 1) 
+                return true;
+
+            //Last possible in cube vertical line
+            if (defaultNumberEntries.Count(e => e.X == currentCoordinate.X && e.Y.IsInRange(currentCube.MinY, currentCube.MaxY)) == 1 
+                && checkedNumberEntries.Count(e => e.X != currentCoordinate.X && e.X.IsInRange(currentCube.MinX, currentCube.MaxX)) == cubeSize - 1) 
+                return true;
 
             return false;
+        }
+
+        private static void SetNewValue(Coordinate currentCoordinate, int currentNumber)
+        {
+            arr[currentCoordinate.X, currentCoordinate.Y] = currentNumber;
+            for (var i = 0; i < fieldSize; i++)
+            {
+                for (var j = 0; j < fieldSize; j++)
+                {
+                    if (j == currentCoordinate.X && i == currentCoordinate.Y)
+                        Console.ForegroundColor = ConsoleColor.DarkGreen;
+
+                    Console.Write($"{arr[j, i]} ");
+                    Console.ResetColor();
+                }
+
+                Console.WriteLine();
+            }
+
+            Console.WriteLine("- - - - - - - - -");
         }
     }
 }

@@ -2,7 +2,7 @@
 {
     public static class IntExtensions
     {
-        public static bool IsWithin(this int value, int min, int max)
+        public static bool IsInRange(this int value, int min, int max)
         {
             return min <= value && value <= max;
         }

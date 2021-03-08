@@ -7,21 +7,21 @@ namespace SudokuSolver
     {
         public Cube(Coordinate currentPosition, int cubeSize)
         {
-            MinX = currentPosition.X / cubeSize;
+            MinX = currentPosition.X / cubeSize * cubeSize;
             MaxX = MinX + cubeSize - 1;
-            MinY = currentPosition.Y / cubeSize;
+            MinY = currentPosition.Y / cubeSize * cubeSize;
             MaxY = MinY + cubeSize - 1;
         }
 
-        private int MinX { get; }
-        private int MaxX { get; }
-        private int MinY { get; }
-        private int MaxY { get; }
+        public int MinX { get; }
+        public int MaxX { get; }
+        public int MinY { get; }
+        public int MaxY { get; }
 
         public bool ContainsCoordinate(Coordinate coordinate)
         {
-            return coordinate.X.IsWithin(MinX, MaxX)
-                   && coordinate.Y.IsWithin(MinY, MaxY);
+            return coordinate.X.IsInRange(MinX, MaxX)
+                   && coordinate.Y.IsInRange(MinY, MaxY);
         }
     }
 }
